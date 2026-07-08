@@ -1,0 +1,37 @@
+! ==============================================
+! Configuration - R2 (Routeur succursale - TogoTech Solutions)
+! Cisco 1941 + module HWIC-2T
+! ==============================================
+
+hostname R2
+service password-encryption
+enable secret cisco123
+
+! --- Interface LAN vers SW2 (VLAN 60 unique) ---
+interface gigabitEthernet 0/1
+ ip address 192.168.60.1 255.255.255.0
+ no shutdown
+exit
+
+! --- Liaison WAN vers R1 (siège) ---
+interface serial 0/0/0
+ ip address 10.0.0.2 255.255.255.252
+ no shutdown
+exit
+
+! --- Route par defaut vers le siège ---
+ip route 0.0.0.0 0.0.0.0 10.0.0.1
+
+! --- Administration securisee (SSH) ---
+username admin privilege 15 secret cisco123
+ip domain-name reseau-succursale.local
+crypto key generate rsa
+! taille de cle : 1024
+
+line vty 0 4
+ transport input ssh
+ login local
+exit
+
+end
+write memory

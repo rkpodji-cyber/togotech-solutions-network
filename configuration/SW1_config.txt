@@ -1,0 +1,76 @@
+! ==============================================
+! Configuration - SW1 (Switch siège - TogoTech Solutions)
+! Cisco Catalyst 2960-24TT
+! ==============================================
+
+hostname SW1
+service password-encryption
+enable secret cisco123
+
+! --- Création des VLANs ---
+vlan 10
+ name Direction
+vlan 20
+ name Comptabilite
+vlan 30
+ name IT
+vlan 40
+ name Invites
+vlan 50
+ name Serveurs
+exit
+
+! --- VLAN 10 : Direction ---
+interface range fastEthernet 0/1 - 4
+ switchport mode access
+ switchport access vlan 10
+ switchport port-security
+ switchport port-security maximum 2
+ switchport port-security mac-address sticky
+ switchport port-security violation restrict
+exit
+
+! --- VLAN 20 : Comptabilite ---
+interface range fastEthernet 0/5 - 8
+ switchport mode access
+ switchport access vlan 20
+ switchport port-security
+ switchport port-security maximum 2
+ switchport port-security mac-address sticky
+ switchport port-security violation restrict
+exit
+
+! --- VLAN 30 : IT ---
+interface range fastEthernet 0/9 - 12
+ switchport mode access
+ switchport access vlan 30
+ switchport port-security
+ switchport port-security maximum 2
+ switchport port-security mac-address sticky
+ switchport port-security violation restrict
+exit
+
+! --- VLAN 40 : Invites ---
+interface range fastEthernet 0/13 - 16
+ switchport mode access
+ switchport access vlan 40
+ switchport port-security
+ switchport port-security maximum 2
+ switchport port-security mac-address sticky
+ switchport port-security violation restrict
+exit
+
+! --- VLAN 50 : Serveurs ---
+interface fastEthernet 0/17
+ switchport mode access
+ switchport access vlan 50
+exit
+
+! --- Trunk vers R1 (router-on-a-stick) ---
+interface gigabitEthernet 0/1
+ switchport mode trunk
+ switchport trunk allowed vlan 10,20,30,40,50
+exit
+
+end
+write memory

@@ -1,0 +1,101 @@
+! ==============================================
+! Configuration - R1 (Routeur siège - TogoTech Solutions)
+! Cisco 1941 + module HWIC-2T
+! ==============================================
+
+hostname R1
+service password-encryption
+enable secret cisco123
+
+! --- Interface physique vers SW1 (trunk) ---
+interface gigabitEthernet 0/0
+ no shutdown
+exit
+
+! --- Sous-interfaces (router-on-a-stick) ---
+interface gigabitEthernet 0/0.10
+ encapsulation dot1Q 10
+ ip address 192.168.10.1 255.255.255.0
+exit
+
+interface gigabitEthernet 0/0.20
+ encapsulation dot1Q 20
+ ip address 192.168.20.1 255.255.255.0
+exit
+
+interface gigabitEthernet 0/0.30
+ encapsulation dot1Q 30
+ ip address 192.168.30.1 255.255.255.0
+exit
+
+interface gigabitEthernet 0/0.40
+ encapsulation dot1Q 40
+ ip address 192.168.40.1 255.255.255.0
+ ip access-group BLOQUER_INVITES in
+exit
+
+interface gigabitEthernet 0/0.50
+ encapsulation dot1Q 50
+ ip address 192.168.50.1 255.255.255.0
+exit
+
+! --- Liaison WAN vers R2 (succursale) ---
+interface serial 0/0/0
+ ip address 10.0.0.1 255.255.255.252
+ clock rate 64000
+ no shutdown
+exit
+
+! --- Route statique vers le LAN de la succursale ---
+ip route 192.168.60.0 255.255.255.0 10.0.0.2
+
+! --- DHCP par VLAN ---
+ip dhcp excluded-address 192.168.10.1 192.168.10.10
+ip dhcp excluded-address 192.168.20.1 192.168.20.10
+ip dhcp excluded-address 192.168.30.1 192.168.30.10
+ip dhcp excluded-address 192.168.40.1 192.168.40.10
+
+ip dhcp pool VLAN10_Direction
+ network 192.168.10.0 255.255.255.0
+ default-router 192.168.10.1
+ dns-server 192.168.50.10
+exit
+
+ip dhcp pool VLAN20_Compta
+ network 192.168.20.0 255.255.255.0
+ default-router 192.168.20.1
+ dns-server 192.168.50.10
+exit
+
+ip dhcp pool VLAN30_IT
+ network 192.168.30.0 255.255.255.0
+ default-router 192.168.30.1
+ dns-server 192.168.50.10
+exit
+
+ip dhcp pool VLAN40_Invites
+ network 192.168.40.0 255.255.255.0
+ default-router 192.168.40.1
+ dns-server 192.168.50.10
+exit
+
+! --- ACL de sécurité : le VLAN Invites ne peut pas atteindre Direction ni Serveurs ---
+ip access-list extended BLOQUER_INVITES
+ deny ip 192.168.40.0 0.0.0.255 192.168.10.0 0.0.0.255
+ deny ip 192.168.40.0 0.0.0.255 192.168.50.0 0.0.0.255
+ permit ip any any
+exit
+
+! --- Administration securisee (SSH) ---
+username admin privilege 15 secret cisco123
+ip domain-name reseau-hq.local
+crypto key generate rsa
+! taille de cle : 1024
+
+line vty 0 4
+ transport input ssh
+ login local
+exit
+
+end
+write memory
