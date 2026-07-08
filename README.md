@@ -95,4 +95,58 @@ Segmentation VLAN · routage inter-VLAN (router-on-a-stick) · configuration DHC
 
 ---
 
+# Phase 2 — Extension IoT (Smart Office)
+
+À la suite de la certification *Exploring Internet of Things with Cisco Packet Tracer*, le réseau TogoTech Solutions a été étendu pour intégrer un segment IoT au siège, sans reconstruire la topologie existante — approche volontairement réaliste d'une entreprise qui fait évoluer son infrastructure.
+
+![Topologie avec extension IoT](screenshots/11_topologie_extension_iot.png)
+
+## Ce qui a été ajouté
+
+- **VLAN 70 (IoT)** — réseau `192.168.70.0/24`, passerelle `192.168.70.1` sur une nouvelle sous-interface de R1
+- **Server1** — serveur d'enregistrement IoT, connecté en filaire à SW1
+- **Home Gateway1 (DLC100)** — point d'accès Wi-Fi (SSID `TogoTech_IoT`, WPA2-PSK), connecté en filaire à SW1 et faisant le pont vers les appareils sans fil
+- **5 appareils IoT** connectés en Wi-Fi : détecteur de mouvement, ventilateur, ampoule connectée, serrure de porte, climatiseur
+- **DHCP dédié** pour le VLAN IoT
+- **ACL de sécurité** (`BLOQUER_IOT`) : le VLAN IoT ne peut pas atteindre Direction, Comptabilité, ni Serveurs — seul l'accès vers l'IT reste ouvert (maintenance technique)
+
+## Configuration
+
+- [`SW1_config.txt`](configuration/SW1_config.txt) — section VLAN 70 ajoutée en fin de fichier
+- [`R1_config.txt`](configuration/R1_config.txt) — sous-interface, DHCP et ACL IoT ajoutés en fin de fichier
+- [`HomeGateway_wifi_config.md`](configuration/HomeGateway_wifi_config.md) — réglages Wi-Fi (SSID, WPA2, DHCP) du point d'accès
+
+## Tests et validation
+
+| # | Test | Résultat attendu | Résultat obtenu |
+|---|---|---|---|
+| 1 | Appareil IoT rejoint le Wi-Fi et reçoit une IP | Connexion WPA2 réussie | ✅ Réussi (192.168.70.101 reçue) |
+| 2 | Ping IT (VLAN 30) → Server1 IoT (VLAN 70) | Réussi (routage inter-VLAN) | ✅ Réussi (TTL=127) |
+| 3 | Ping IoT (Server1) → Direction (VLAN 10) | Bloqué par l'ACL | ✅ Bloqué (`Destination host unreachable`) |
+| 4 | Ping IoT (Server1) → IT (VLAN 30) | Réussi (accès maintenance conservé) | ✅ Réussi (TTL=127) |
+
+**Preuve du test ACL** (blocage vers Direction + accès IT conservé, dans la même capture) :
+![Test ACL IoT](screenshots/19_test_acl_iot_bloque_it_ok.png)
+
+**Appareil IoT connecté en Wi-Fi avec IP DHCP obtenue :**
+![Appareil IoT connecté](screenshots/17_iot_device_connected_dhcp.png)
+
+**Configuration Wi-Fi du Home Gateway :**
+![Config Wi-Fi](screenshots/16_wifi_home_gateway_config.png)
+
+**Vérification VLAN 70 sur SW1 et du trunk :**
+![VLAN 70](screenshots/13_vlan70_sw1_verification.png)
+![Trunk VLAN 70](screenshots/14_trunk_vlan70.png)
+
+## Limitations rencontrées (documentées honnêtement)
+
+- **Service d'enregistrement IoT sur Server1** : le bouton d'activation du service, dans l'onglet Services de Packet Tracer, n'a pas répondu aux clics malgré plusieurs tentatives (redémarrage de l'application inclus). Cela n'a pas empêché la validation du reste de l'architecture (connectivité Wi-Fi, routage, DHCP, sécurité), mais l'enregistrement centralisé et le pilotage à distance des appareils via ce service n'ont pas pu être démontrés dans cette version du projet.
+- **Ping vers le Home Gateway bloqué depuis le réseau interne** : comportement de firewall par défaut du routeur domestique simulé, qui filtre les requêtes ICMP entrantes même depuis un réseau nominalement `de confiance`. Comportement observé et conservé tel quel plutôt que désactivé, car cohérent avec une posture de sécurité par défaut.
+
+## Compétences mises en pratique (Phase 2)
+
+Réseaux IoT · sécurité Wi-Fi (WPA2-PSK) · segmentation et isolation d'un segment à risque · NAT et fonctionnement d'un routeur domestique · extension d'une infrastructure réseau existante sans interruption de service · documentation honnête de limitations techniques
+
+---
+
 *Projet réalisé par Romuald Kpodji dans le cadre de ma pratique personnelle en cybersécurité et réseaux — [LinkedIn](#) · [GitHub](#)*
