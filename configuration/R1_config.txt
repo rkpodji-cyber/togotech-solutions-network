@@ -99,3 +99,40 @@ exit
 
 end
 write memory
+
+! ==============================================
+! PHASE 2 — Extension IoT (Smart Office)
+! ==============================================
+
+configure terminal
+
+! --- Nouvelle sous-interface pour le VLAN IoT ---
+interface gigabitEthernet 0/0.70
+ encapsulation dot1Q 70
+ ip address 192.168.70.1 255.255.255.0
+exit
+
+! --- DHCP pour le reseau IoT ---
+ip dhcp excluded-address 192.168.70.1 192.168.70.10
+
+ip dhcp pool VLAN70_IoT
+ network 192.168.70.0 255.255.255.0
+ default-router 192.168.70.1
+ dns-server 192.168.50.10
+exit
+
+! --- ACL de securite : le VLAN IoT ne peut pas atteindre Direction, Comptabilite ni Serveurs ---
+! (l'IT reste accessible pour la maintenance technique)
+ip access-list extended BLOQUER_IOT
+ deny ip 192.168.70.0 0.0.0.255 192.168.10.0 0.0.0.255
+ deny ip 192.168.70.0 0.0.0.255 192.168.20.0 0.0.0.255
+ deny ip 192.168.70.0 0.0.0.255 192.168.50.0 0.0.0.255
+ permit ip any any
+exit
+
+interface gigabitEthernet 0/0.70
+ ip access-group BLOQUER_IOT in
+exit
+
+end
+write memory

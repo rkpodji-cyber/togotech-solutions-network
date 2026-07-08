@@ -72,5 +72,30 @@ interface gigabitEthernet 0/1
  switchport trunk allowed vlan 10,20,30,40,50
 exit
 
+! ==============================================
+! PHASE 2 — Extension IoT (Smart Office)
+! ==============================================
+
+vlan 70
+ name IoT
+exit
+
+! --- Server1 (serveur d'enregistrement IoT) ---
+interface fastEthernet 0/18
+ switchport mode access
+ switchport access vlan 70
+exit
+
+! --- Home Gateway1 (point d'accès Wi-Fi des objets connectés) ---
+interface fastEthernet 0/19
+ switchport mode access
+ switchport access vlan 70
+exit
+
+! --- Mise à jour du trunk pour inclure le nouveau VLAN IoT ---
+interface gigabitEthernet 0/1
+ switchport trunk allowed vlan add 70
+exit
+
 end
 write memory
